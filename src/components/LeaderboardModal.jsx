@@ -1,6 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import CloseButton from "./CloseButton";
 
 export default function LeaderboardModal({ onClose }) {
     const [players, setPlayers] = useState([]);
@@ -89,22 +90,7 @@ setLoading(false);
             Leaderboard
           </h1>
 
-          <button
-            onClick={onClose}
-            className="
-              flex items-center justify-center
-              w-9 h-9
-              rounded-full
-              text-[#9DB0C2]
-              text-xl
-              hover:text-[#FFFBFB]
-              hover:bg-[#33363C]
-              transition-colors
-              shrink-0
-            "
-          >
-            ✕
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {/* Separator */}

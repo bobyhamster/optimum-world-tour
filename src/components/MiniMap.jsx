@@ -1,12 +1,13 @@
-          import {
-            MapContainer,
-            TileLayer,
-            Marker,
-            CircleMarker,
-            Polyline,
-            useMapEvents,
-            useMap,
-          } from "react-leaflet";
+import { DivIcon } from "leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Polyline,
+  useMapEvents,
+  useMap,
+  Marker
+} from "react-leaflet";
 
           import { useState, useEffect } from "react";
 
@@ -81,6 +82,44 @@ console.log(correctPosition);
   correctPosition,
   hasGuessed,
 });
+const playerIcon = new DivIcon({
+  className: "",
+  html: `
+    <div class="player-marker">
+      <div style="
+        width:28px;
+        height:28px;
+        border-radius:50%;
+        background:rgba(81,177,254,.25);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:
+          0 0 18px rgba(81,177,254,.55),
+          0 0 34px rgba(81,177,254,.25);
+      ">
+        <div style="
+          width:16px;
+          height:16px;
+          border-radius:50%;
+          background:#51B1FE;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <div style="
+            width:7px;
+            height:7px;
+            border-radius:50%;
+            background:white;
+          "></div>
+        </div>
+      </div>
+    </div>
+  `,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
             return (
               <div 
               onMouseEnter={() => setExpanded(true)}
@@ -122,7 +161,12 @@ console.log(correctPosition);
 
 
                   <ClickHandler onClick={handleMapClick} />
-                  {marker && <Marker position={marker} />}
+                  {marker && (
+  <Marker
+    position={marker}
+    icon={playerIcon}
+  />
+)}
                   {hasGuessed && (
             <CircleMarker
               center={correctPosition}
