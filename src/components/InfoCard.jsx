@@ -1,3 +1,4 @@
+
 export default function InfoCard({ onOpenGuide }) {
   return (
     <div

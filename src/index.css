@@ -17,3 +17,22 @@ body {
   background: #282C34;
   overflow: hidden;
 }
+/* Player marker */
+
+.player-marker {
+  animation: playerPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes playerPulse {
+  0% {
+    transform: scale(.9);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(.9);
+  }
+}

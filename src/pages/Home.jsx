@@ -105,10 +105,10 @@ async function saveNickname(nickname) {
 
 
 
-<InfoCard onOpenGuide={() => setShowGuide(true)} />
-  {showGuide && (
-  <GuideModal onClose={() => setShowGuide(false)} />
-)}
+<InfoCard
+  onOpenGuide={() => setShowGuide(true)}
+/>
+  
 
 <div className="grid min-h-screen grid-cols-2"></div>
       <div className="grid min-h-screen grid-cols-2">
@@ -126,8 +126,15 @@ async function saveNickname(nickname) {
 <BottomCards
   onOpenLeaderboard={() => setShowLeaderboard(true)}
 />
+
 {showGuide && (
-  <GuideModal onClose={() => setShowGuide(false)} />
+  <GuideModal
+    onClose={() => setShowGuide(false)}
+    onStart={() => {
+      setShowGuide(false);
+      onStart();
+    }}
+  />
 )}
         
       </div>

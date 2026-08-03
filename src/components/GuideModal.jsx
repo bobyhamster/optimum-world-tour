@@ -1,16 +1,12 @@
-export default function GuideModal({ onClose }) {
+import CloseButton from "./CloseButton";
+export default function GuideModal({ onClose, onStart }) {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-md">
 
       <div className="relative w-[760px] rounded-[32px] border border-[#3B414B] bg-[#2C3138] p-8 shadow-[0_30px_100px_rgba(0,0,0,.5)]">
 
         {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute right-6 top-6 text-3xl text-[#B0BED1] hover:text-white"
-        >
-          ×
-        </button>
+        <CloseButton onClick={onClose} />
 
         <h2 className="text-[34px] font-bold text-white">
           HOW TO PLAY
@@ -34,11 +30,11 @@ export default function GuideModal({ onClose }) {
         </div>
 
         <button
-          onClick={onClose}
-          className="mt-8 h-[58px] w-full rounded-full bg-white text-[#282C34] text-lg font-semibold hover:bg-[#EEF2F6]"
-        >
-          START PLAYING
-        </button>
+  onClick={onStart}
+  className="mt-8 h-[58px] w-full rounded-full bg-white text-[#282C34] text-lg font-semibold hover:bg-[#EEF2F6]"
+>
+  START PLAYING
+</button>
 
       </div>
     </div>

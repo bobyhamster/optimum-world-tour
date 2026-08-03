@@ -4,9 +4,14 @@ import MiniMap from "../components/MiniMap";
 import PanoramaViewer from "../components/PanoramaViewer";
 import MapPanel from "../components/MapPanel";
 import ResultPanel from "../components/ResultPanel";
+import ReviewResults from "../components/ReviewResults";
 import facts from "../data/facts";
+import FinalRoundPanel from "../components/FinalRoundPanel";
+import LeaderboardModal from "../components/LeaderboardModal";
+
 import FactCard from "../components/FactCard";
 import { supabase } from "../lib/supabase";
+
 
 function shuffle(array) {
   const arr = [...array];
@@ -43,11 +48,16 @@ export default function Game({ onExit }) {
   const seconds = String(timeLeft % 60).padStart(2, "0");
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
-  const [gameLocations] = useState(() => shuffle(locations));
+  const [gameLocations, setGameLocations] = useState(() =>
+  shuffle(locations)
+);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [hasGuessed, setHasGuessed] = useState(false);
   const [distance, setDistance] = useState(null);
   const [points, setPoints] = useState(null);
+  const [results, setResults] = useState([]);
+const [showSummary, setShowSummary] = useState(false);
+const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const currentLocation = gameLocations[round];
   const factImage = facts[currentLocation.id] || null;
@@ -65,9 +75,29 @@ export default function Game({ onExit }) {
       Math.round(5000 * Math.exp(-distance / 2000))
     );
 
-    setScore((prev) => prev + points);
+    setResults((prev) => [
+  ...prev,
+  {
+    round: round + 1,
+    score: points,
+    distance,
+
+    guess: {
+      lat: selectedPosition.lat,
+      lng: selectedPosition.lng,
+    },
+
+    correct: {
+      lat: currentLocation.lat,
+      lng: currentLocation.lng,
+    },
+
+    location: currentLocation,
+  },
+]);
     setDistance(distance);
     setPoints(points);
+    setScore(prev => prev + points);
 
     console.log("Distance:", distance.toFixed(2), "km");
     console.log("Score:", points);
@@ -171,15 +201,55 @@ export default function Game({ onExit }) {
     console.error(updateError);
   }
 }
+
+function restartGame() {
+  setGameLocations(shuffle(locations));
+
+  setRound(0);
+
+  setScore(0);
+
+  setResults([]);
+
+  setSelectedPosition(null);
+
+  setHasGuessed(false);
+
+  setDistance(null);
+
+  setPoints(null);
+
+  setAnimatedDistance(0);
+
+  setAnimatedPoints(0);
+
+  setTimeLeft(120);
+
+  setShowSummary(false);
+}
+
+async function handleNextRound() {
+
+  if (round >= gameLocations.length - 1) {
+    await saveGameResult();
+
+    setShowSummary(true);
+
+    return;
+  }
+
+  // остальной код...
+}
   async function handleNextRound() {
+   
   
 
  if (round >= gameLocations.length - 1) {
-  await saveGameResult();
+    await saveGameResult();
 
-  onExit();
+    setShowSummary(true);
 
-  return;
+    return;
 }
 
 setRound(prev => prev + 1);
@@ -196,7 +266,20 @@ setRound(prev => prev + 1);
   setTimeLeft(120);
 
 }
+if (showSummary) {
+  return (
+    <ReviewResults
+  score={score}
+  results={results}
 
+  onPlayAgain={restartGame}
+
+  onLeaderboard={() => setShowLeaderboard(true)}
+
+  onExit={onExit}
+/>
+  );
+}
   return (
     <main className="relative min-h-screen bg-[#282C34] text-white flex flex-col">
       {!hasGuessed && (
@@ -331,30 +414,31 @@ w-full
   <FactCard image={factImage} />
 </div>
             </div>
-            <ResultPanel
-  animatedDistance={animatedDistance}   
-  animatedPoints={animatedPoints}
-  factImage={factImage}
-  onNext={handleNextRound}
-  
-
-  round={round}
-  gameLocations={gameLocations}
-
-  setRound={setRound}
-  setHasGuessed={setHasGuessed}
-  setSelectedPosition={setSelectedPosition}
-  setDistance={setDistance}
-  setPoints={setPoints}
-  setTimeLeft={setTimeLeft}
-/>
+            {round === gameLocations.length - 1 ? (
+  <FinalRoundPanel
+    animatedDistance={animatedDistance}
+    animatedPoints={animatedPoints}
+    onViewResults={handleNextRound}
+  />
+) : (
+  <ResultPanel
+    animatedDistance={animatedDistance}
+    animatedPoints={animatedPoints}
+    factImage={factImage}
+    onNext={handleNextRound}
+  />
+)}
 
           </>
 
         )}
 
       </div>
-
+{showLeaderboard && (
+  <LeaderboardModal
+    onClose={() => setShowLeaderboard(false)}
+  />
+)}
     </main>
   );
 }
