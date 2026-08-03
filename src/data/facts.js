@@ -2,7 +2,7 @@
 import bobyhamster from "../assets/facts/bobyhamster.png";
 import jeff from "../assets/facts/jeff.png";
 import samurai from "../assets/facts/samurai.png";
-import tynar from "../assets/facts/tynar.png";
+import tynar from "../assets/facts/Tynar.png";
 import vssema from "../assets/facts/vssema.png";
 
 const facts = {
