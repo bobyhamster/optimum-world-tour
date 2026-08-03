@@ -38,9 +38,7 @@ export default function Hero({ onStart }) {
         drop-shadow-[0_10px_40px_rgba(0,0,0,1)]
         "
       >
-        Discover the people and technology
-        <br />
-        behind the ecosystem
+        
       </p>
 <div className="mt-16" />
       <PlayButton onClick={onStart} />
