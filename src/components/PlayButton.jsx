@@ -8,10 +8,10 @@ export default function PlayButton({ onClick }) {
         left-1/2
         -translate-x-1/2
 
-        top-[410px]
+        top-[42%]
 
-        w-[600px]
-        h-[100px]
+        w-[min(600px,80vw)]
+        h-[clamp(72px,10vh,100px)]
 
         rounded-full
 
@@ -20,10 +20,8 @@ export default function PlayButton({ onClick }) {
         to-[#FFFBFB]
 
         text-black
-        text-[60px]
+        text-[clamp(36px,4vw,60px)]
         font-black
-
-        
 
         hover:scale-105
         transition-all

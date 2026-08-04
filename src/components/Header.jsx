@@ -4,10 +4,10 @@ export default function Header() {
       <img
         src="/images/logo.png"
         alt="Optimum"
-        className="h-8 w-auto"
+        className="h-[clamp(28px,3vh,36px)] w-auto"
       />
 
-      <span className="text-white text-sm tracking-[10px] uppercase">
+      <span className="text-white text-[clamp(12px,1vw,14px)] tracking-[10px] uppercase">
         OPTIMUM
       </span>
     </header>

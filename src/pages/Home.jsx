@@ -4,11 +4,10 @@ import MenuButtons from "../components/MenuButtons";
 import backgroundVideo from "../assets/videos/background.mp4";
 import InfoCard from "../components/InfoCard";
 import BottomCards from "../components/BottomCards";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 import GuideModal from "../components/GuideModal";
 import LeaderboardModal from "../components/LeaderboardModal";
-import { useEffect } from "react";
-import { supabase } from "../lib/supabase";
 import NicknameModal from "../components/NicknameModal";
 import { usePlayer } from "../contexts/PlayerContext";
 import xIcon from "../assets/icons/x.svg";
@@ -18,125 +17,118 @@ import SocialButton from "../components/SocialButton";
 
 console.log(NicknameModal);
 
-
-
 export default function Home({ onStart }) {
   const [showGuide, setShowGuide] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-const [showNickname, setShowNickname] = useState(false);
-const { player, setPlayer } = usePlayer();
+  const [showNickname, setShowNickname] = useState(false);
+  const { player, setPlayer } = usePlayer();
 
   useEffect(() => {
-  async function init() {
-    let session = null;
+    async function init() {
+      let session = null;
 
-    const {
-      data: { session: currentSession },
-    } = await supabase.auth.getSession();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
 
-    session = currentSession;
+      session = currentSession;
 
-    console.log("SESSION:", session);
+      console.log("SESSION:", session);
 
-    if (!session) {
-      const { data, error } = await supabase.auth.signInAnonymously();
+      if (!session) {
+        const { data, error } = await supabase.auth.signInAnonymously();
 
-      if (error) {
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        session = data.session;
+      }
+
+      setPlayer(session.user);
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
         console.error(error);
         return;
       }
 
-      session = data.session;
+      if (!profile) {
+        // Первый вход — показать окно выбора ника
+        setShowNickname(true);
+      } else {
+        // Профиль уже существует
+        console.log("Welcome back:", profile.nickname);
+      }
+
+      console.log("PLAYER:", session.user);
     }
 
-    setPlayer(session.user);
+    init();
+  }, []);
 
-const { data: profile, error } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("id", session.user.id)
-  .single();
+  async function saveNickname(nickname) {
+    if (!player) return;
 
-if (error && error.code !== "PGRST116") {
-  console.error(error);
-  return;
-}
+    const { error } = await supabase
+      .from("profiles")
+      .insert({
+        id: player.id,
+        nickname: nickname,
+      });
 
-if (!profile) {
-  // Первый вход — показать окно выбора ника
-  setShowNickname(true);
-} else {
-  // Профиль уже существует
-  console.log("Welcome back:", profile.nickname);
-}
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
 
-console.log("PLAYER:", session.user);
+    console.log("PROFILE CREATED");
+
+    setShowNickname(false);
   }
 
-  init();
-}, []);
-async function saveNickname(nickname) {
-  if (!player) return;
-
-  const { error } = await supabase
-    .from("profiles")
-    .insert({
-      id: player.id,
-      nickname: nickname,
-    });
-
-  if (error) {
-    console.error(error);
-    alert(error.message);
-    return;
-  }
-
-  console.log("PROFILE CREATED");
-
-  setShowNickname(false);
-}
   return (
-    <main className="relative h-screen overflow-hidden">
+    <main className="relative w-screen h-screen overflow-hidden">
       <video
-  autoPlay
-  loop
-  muted
-  playsInline
-  className="absolute inset-0 w-full h-full object-cover"
->
-  <source src={backgroundVideo} type="video/mp4" />
-</video>
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src={backgroundVideo} type="video/mp4" />
+      </video>
 
+      <InfoCard
+        onOpenGuide={() => setShowGuide(true)}
+      />
 
+      <div className="absolute top-8 right-8 z-50 flex gap-4">
+        <SocialButton
+          href="https://x.com/getoptimum"
+          icon={xIcon}
+          alt="X"
+        />
+        <SocialButton
+          href="https://discord.gg/hrcVUjXFy"
+          icon={discordIcon}
+          alt="Discord"
+        />
+        <SocialButton
+          href="https://www.getoptimum.xyz"
+          icon={globeIcon}
+          alt="Website"
+        />
+      </div>
 
-<InfoCard
-  onOpenGuide={() => setShowGuide(true)}
-/>
-<div className="absolute top-8 right-8 z-50 flex gap-4">
-
-  <SocialButton
-    href="https://x.com/getoptimum"
-    icon={xIcon}
-    alt="X"
-  />
-
-  <SocialButton
-    href="https://discord.gg/hrcVUjXFy"
-    icon={discordIcon}
-    alt="Discord"
-  />
-
-  <SocialButton
-    href="https://www.getoptimum.xyz"
-    icon={globeIcon}
-    alt="Website"
-  />
-
-</div>
-  
-
-<div className="grid min-h-screen grid-cols-2"></div>
-      <div className="grid min-h-screen grid-cols-2">
+      <div className="grid h-screen w-screen grid-cols-2">
         <div className="p-10">
           <Header />
 
@@ -148,32 +140,33 @@ async function saveNickname(nickname) {
             <MenuButtons />
           </div>
         </div>
-<BottomCards
-  onOpenLeaderboard={() => setShowLeaderboard(true)}
-/>
 
-{showGuide && (
-  <GuideModal
-    onClose={() => setShowGuide(false)}
-    onStart={() => {
-      setShowGuide(false);
-      onStart();
-    }}
-  />
-)}
-        
+        <BottomCards
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
+        />
+
+        {showGuide && (
+          <GuideModal
+            onClose={() => setShowGuide(false)}
+            onStart={() => {
+              setShowGuide(false);
+              onStart();
+            }}
+          />
+        )}
       </div>
+
       {showLeaderboard && (
-  <LeaderboardModal
-    onClose={() => setShowLeaderboard(false)}
-  />
-)}
-{showNickname && (
-  <NicknameModal
-    onSubmit={saveNickname}
-  />
-)}
+        <LeaderboardModal
+          onClose={() => setShowLeaderboard(false)}
+        />
+      )}
+
+      {showNickname && (
+        <NicknameModal
+          onSubmit={saveNickname}
+        />
+      )}
     </main>
-    
   );
 }

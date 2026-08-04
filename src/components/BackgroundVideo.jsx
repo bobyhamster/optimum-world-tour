@@ -12,8 +12,9 @@ export default function BackgroundVideo() {
         inset-0
         w-full
         h-full
-        object-cover
+        object-contain
         pointer-events-none
+        bg-black
       "
     >
       <source src={video} type="video/mp4" />

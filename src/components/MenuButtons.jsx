@@ -1,11 +1,11 @@
 export default function MenuButtons() {
   return (
-    <div className="flex gap-5">
+    <div className="flex gap-[clamp(12px,2vw,20px)] flex-wrap">
 
       <button
         className="
-          h-14
-          px-8
+          h-[clamp(48px,5vh,56px)]
+px-[clamp(22px,2vw,32px)]
           rounded-full
           border
           border-[#33363C]
@@ -20,8 +20,8 @@ export default function MenuButtons() {
 
       <button
         className="
-          h-14
-          px-8
+         h-[clamp(48px,5vh,56px)]
+px-[clamp(22px,2vw,32px)]
           rounded-full
           border
           border-[#33363C]
