@@ -11,6 +11,10 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import NicknameModal from "../components/NicknameModal";
 import { usePlayer } from "../contexts/PlayerContext";
+import xIcon from "../assets/icons/x.svg";
+import discordIcon from "../assets/icons/discord.svg";
+import globeIcon from "../assets/icons/globe.svg";
+import SocialButton from "../components/SocialButton";
 
 console.log(NicknameModal);
 
@@ -108,6 +112,27 @@ async function saveNickname(nickname) {
 <InfoCard
   onOpenGuide={() => setShowGuide(true)}
 />
+<div className="absolute top-8 right-8 z-50 flex gap-4">
+
+  <SocialButton
+    href="https://x.com/getoptimum"
+    icon={xIcon}
+    alt="X"
+  />
+
+  <SocialButton
+    href="https://discord.gg/optimum"
+    icon={discordIcon}
+    alt="Discord"
+  />
+
+  <SocialButton
+    href="https://www.getoptimum.xyz"
+    icon={globeIcon}
+    alt="Website"
+  />
+
+</div>
   
 
 <div className="grid min-h-screen grid-cols-2"></div>

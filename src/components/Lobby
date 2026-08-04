@@ -1,0 +1,30 @@
+<div className="absolute top-8 right-8 flex items-center gap-4 z-50">
+
+  <a
+    href="https://x.com/getoptimum"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="social-button"
+  >
+    <img src={xIcon} alt="X" className="w-6 h-6" />
+  </a>
+
+  <a
+    href="https://discord.gg/optimum"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="social-button"
+  >
+    <img src={discordIcon} alt="Discord" className="w-6 h-6" />
+  </a>
+
+  <a
+    href="https://www.getoptimum.xyz"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="social-button"
+  >
+    <img src={websiteIcon} alt="Website" className="w-6 h-6" />
+  </a>
+
+</div>

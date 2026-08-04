@@ -228,18 +228,7 @@ function restartGame() {
   setShowSummary(false);
 }
 
-async function handleNextRound() {
 
-  if (round >= gameLocations.length - 1) {
-    await saveGameResult();
-
-    setShowSummary(true);
-
-    return;
-  }
-
-  // остальной код...
-}
   async function handleNextRound() {
    
   
@@ -367,33 +356,18 @@ w-full
             />
 
             <div className="absolute bottom-6 right-6">
-              <MiniMap
-                marker={selectedPosition}
-                onMarkerChange={setSelectedPosition}
-                correctPosition={{
-                  lat: currentLocation.lat,
-                  lng: currentLocation.lng,
-                }}
-                hasGuessed={hasGuessed}
-              />
-
-              <button
-                onClick={handleGuess}
-                disabled={!selectedPosition}
-                className="
-                w-full
-                h-14
-                bg-[#51B1FE]
-                font-semibold
-                rounded-b-2xl
-                hover:bg-[#3fa4f8]
-                transition-colors
-                disabled:opacity-50
-              "
-              >
-                GUESS
-              </button>
-            </div>
+  <MiniMap
+    marker={selectedPosition}
+    onMarkerChange={setSelectedPosition}
+    correctPosition={{
+      lat: currentLocation.lat,
+      lng: currentLocation.lng,
+    }}
+    hasGuessed={hasGuessed}
+    onGuess={handleGuess}
+    canGuess={!!selectedPosition}
+  />
+</div>
           </>
         ) : (
           <>
@@ -410,7 +384,12 @@ w-full
                 resultMode={true}
               />
 
-              <div className="fixed left-8 top-8 z-[99999]">
+              <div
+  className="fixed left-8 top-8 z-[99999]"
+  style={{
+    outline: "4px solid red",
+  }}
+>
   <FactCard image={factImage} />
 </div>
             </div>

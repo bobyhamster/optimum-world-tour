@@ -36,3 +36,39 @@ body {
     transform: scale(.9);
   }
 }
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-control-zoom a {
+  width: 46px !important;
+  height: 46px !important;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(51, 54, 60, .9) !important;
+  backdrop-filter: blur(18px);
+
+  color: white !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 50% !important;
+
+  transition: .25s;
+}
+
+.leaflet-control-zoom a:hover {
+  transform: scale(1.08);
+  border-color: #51B1FE !important;
+  box-shadow: 0 0 22px rgba(81,177,254,.35);
+}
+
+.leaflet-control-zoom-in {
+  margin-bottom: 10px !important;
+}
