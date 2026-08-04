@@ -384,12 +384,7 @@ w-full
                 resultMode={true}
               />
 
-              <div
-  className="fixed left-8 top-8 z-[99999]"
-  style={{
-    outline: "4px solid red",
-  }}
->
+              <div className="fixed left-8 top-8 z-[99999]">
   <FactCard image={factImage} />
 </div>
             </div>
