@@ -121,7 +121,7 @@ async function saveNickname(nickname) {
   />
 
   <SocialButton
-    href="https://discord.gg/optimum"
+    href="https://discord.gg/hrcVUjXFy"
     icon={discordIcon}
     alt="Discord"
   />
