@@ -85,7 +85,43 @@ export default function Home({ onStart }) {
       audio.play().catch(console.error);
     }
   };
+async function saveNickname(nickname) {
+  if (!player) return;
 
+  // Проверяем, существует ли профиль
+  const { data: existing, error: checkError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", player.id)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error(checkError);
+    return;
+  }
+
+  // Уже существует
+  if (existing) {
+    setShowNickname(false);
+    return;
+  }
+
+  // Создаем новый профиль
+  const { error } = await supabase
+    .from("profiles")
+    .insert({
+      id: player.id,
+      nickname,
+      points: 0,
+    });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setShowNickname(false);
+}
   return (
     <main className="relative w-screen h-screen overflow-hidden">
       <audio 
@@ -147,7 +183,9 @@ export default function Home({ onStart }) {
         />
       )}
       {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
-      {showNickname && <NicknameModal onSubmit={() => setShowNickname(false)} />}
+      {showNickname && (
+  <NicknameModal onSubmit={saveNickname} />
+)}
     </main>
   );
 }
