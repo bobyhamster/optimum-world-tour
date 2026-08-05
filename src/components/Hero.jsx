@@ -1,20 +1,36 @@
 import PlayButton from "./PlayButton";
+import optimumLogo from "../assets/logo.png";
 
 export default function Hero({ onStart }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center pt-[10%] pointer-events-none">
       <div className="flex flex-col items-center pointer-events-auto">
-        <h1
-          className="
-          text-[clamp(64px,6vw,92px)]
-          font-black
-          tracking-tight
-          leading-none
-          text-white
-          "
-        >
-          OPTIMUM
-        </h1>
+        <div className="flex items-start justify-center gap-0">
+
+  <img
+  src={optimumLogo}
+  alt="Optimum"
+  className="
+    h-[60px]
+    w-auto
+  
+    
+    translate-y-[20px]
+  "
+/>
+
+  <h1
+    className="
+      text-[clamp(64px,6vw,92px)]
+      font-black
+      leading-none
+      text-white
+    "
+  >
+    PTIMUM
+  </h1>
+
+</div>
 
         <h1
           className="
