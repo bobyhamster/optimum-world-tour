@@ -52,7 +52,7 @@ const locations = [
     lat: 49.8918782,
     lng: 28.5923206,
 
-    image: "/360/Ukraine/samurai1.jpg",
+    image: "/360/Fr/samurai1.jpg",
 
     width: 1918,
     height: 952,
