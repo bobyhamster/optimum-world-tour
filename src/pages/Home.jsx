@@ -22,6 +22,7 @@ export default function Home({ onStart }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showNickname, setShowNickname] = useState(false);
   const { player, setPlayer } = usePlayer();
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
@@ -138,10 +139,14 @@ async function saveNickname(nickname) {
         loop
         muted
         playsInline
+        onLoadedData={() => setVideoLoaded(true)}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       >
         <source src={backgroundVideo} type="video/mp4" />
       </video>
+      {!videoLoaded && (
+  <div className="absolute inset-0 bg-black z-10" />
+)}
 
       <InfoCard onOpenGuide={() => setShowGuide(true)} />
 

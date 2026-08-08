@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import locations from "../data/locations";
 import MiniMap from "../components/MiniMap";
 import PanoramaViewer from "../components/PanoramaViewer";
@@ -9,8 +9,11 @@ import facts from "../data/facts";
 import FinalRoundPanel from "../components/FinalRoundPanel";
 import LeaderboardModal from "../components/LeaderboardModal";
 
+
+
 import FactCard from "../components/FactCard";
 import { supabase } from "../lib/supabase";
+import scoreSound from "../assets/audio/score.mp3";
 
 
 function shuffle(array) {
@@ -49,7 +52,7 @@ export default function Game({ onExit }) {
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [gameLocations, setGameLocations] = useState(() =>
-  shuffle(locations)
+  shuffle(locations).slice(0, 5)
 );
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [hasGuessed, setHasGuessed] = useState(false);
@@ -58,6 +61,7 @@ export default function Game({ onExit }) {
   const [results, setResults] = useState([]);
 const [showSummary, setShowSummary] = useState(false);
 const [showLeaderboard, setShowLeaderboard] = useState(false);
+const scoreAudioRef = useRef(null);
 
   const currentLocation = gameLocations[round];
   const factImage = facts[currentLocation.id] || null;
@@ -132,6 +136,9 @@ const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     if (!hasGuessed || distance == null || points == null) return;
+    scoreAudioRef.current = new Audio(scoreSound);
+scoreAudioRef.current.volume = 0.35;
+scoreAudioRef.current.play().catch(() => {});
 
     let frame;
     let start;
@@ -153,7 +160,12 @@ const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     frame = requestAnimationFrame(animate);
 
-    return () => cancelAnimationFrame(frame);
+    return () => {
+  cancelAnimationFrame(frame);
+
+  scoreAudioRef.current?.pause();
+  scoreAudioRef.current = null;
+};
   }, [hasGuessed, distance, points]);
 
   function handleTimeUp() {
@@ -308,7 +320,7 @@ w-full
               </span>
 
               <span className="mt-0.5 text-[34px] font-black leading-none text-[#282C34]">
-                {round + 1} / {locations.length}
+                {round + 1} / {gameLocations.length}
               </span>
 
             </div>
@@ -384,7 +396,7 @@ w-full
                 resultMode={true}
               />
 
-              <div className="fixed left-8 top-8 z-[99999]">
+              <div className="fixed left-15 top-30 z-[99999]">
   <FactCard image={factImage} />
 </div>
             </div>

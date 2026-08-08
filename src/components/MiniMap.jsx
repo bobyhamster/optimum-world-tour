@@ -10,6 +10,7 @@ import {
   ZoomControl,
 } from "react-leaflet";
 import { useState, useEffect } from "react";
+import mapClickSound from "../assets/audio/map-click.mp3";
 
 function ClickHandler({ onClick }) {
   useMapEvents({
@@ -111,9 +112,14 @@ export default function MiniMap({
   const [fullMap, setFullMap] = useState(false);
 
   function handleMapClick(latlng) {
-    if (hasGuessed) return;
-    onMarkerChange(latlng);
-  }
+  if (hasGuessed) return;
+
+  const audio = new Audio(mapClickSound);
+  audio.volume = 0.25;
+  audio.play().catch(() => {});
+
+  onMarkerChange(latlng);
+}
 
   const playerIcon = new DivIcon({
     className: "",
