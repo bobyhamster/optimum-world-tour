@@ -52,7 +52,7 @@ export default function Game({ onExit }) {
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [gameLocations, setGameLocations] = useState(() =>
-  shuffle(locations)
+  shuffle(locations).slice(0, 5)
 );
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [hasGuessed, setHasGuessed] = useState(false);
@@ -215,7 +215,7 @@ scoreAudioRef.current.play().catch(() => {});
 }
 
 function restartGame() {
-  setGameLocations(shuffle(locations));
+  setGameLocations(shuffle(locations).slice(0, 5));
 
   setRound(0);
 
