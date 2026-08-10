@@ -54,6 +54,21 @@ export default function Game({ onExit }) {
   const [gameLocations, setGameLocations] = useState(() =>
   shuffle(locations).slice(0, 5)
 );
+useEffect(() => {
+  gameLocations.forEach((location) => {
+    if (location?.image) {
+      const img = new Image();
+      img.src = location.image;
+    }
+
+    const factImage = facts[location.id];
+
+    if (factImage) {
+      const fact = new Image();
+      fact.src = factImage;
+    }
+  });
+}, [gameLocations]);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [hasGuessed, setHasGuessed] = useState(false);
   const [distance, setDistance] = useState(null);
@@ -65,6 +80,17 @@ const scoreAudioRef = useRef(null);
 
   const currentLocation = gameLocations[round];
   const factImage = facts[currentLocation.id] || null;
+  useEffect(() => {
+  if (!currentLocation) return;
+
+  const img = new Image();
+  img.src = currentLocation.image;
+
+  if (factImage) {
+    const fact = new Image();
+    fact.src = factImage;
+  }
+}, [currentLocation, factImage]);
   function handleGuess() {
     if (!selectedPosition) return;
 
