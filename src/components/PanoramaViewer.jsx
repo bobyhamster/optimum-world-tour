@@ -5,6 +5,8 @@ export default function PanoramaViewer({
   image,
   width,
   height,
+  initialHeading = 0,
+  onHeadingChange,
 }) {
   const containerRef = useRef(null);
 
@@ -52,22 +54,35 @@ export default function PanoramaViewer({
       transitionDuration: 0,
     });
 
+    const handleViewChange = () => {
+      if (onHeadingChange) {
+        const yawDegrees = (view.yaw() * 180) / Math.PI;
+        // Інвертуємо напрямок і розвертаємо на 180 градусів
+        const absoluteHeading = (180 - yawDegrees + initialHeading) % 360;
+        onHeadingChange(absoluteHeading);
+      }
+    };
+
+    view.addEventListener("change", handleViewChange);
+    handleViewChange();
+
     return () => {
+      view.removeEventListener("change", handleViewChange);
       viewer.destroy();
     };
-  }, [image, width]);
+  }, [image, width, initialHeading, onHeadingChange]);
 
   return (
-  <div
-    ref={containerRef}
-    style={{
-      position: "absolute",
-      inset: 0,
-      width: "100%",
-      height: "100%",
-      overflow: "hidden",
-      cursor: "grab",
-    }}
-  />
-);
+    <div
+      ref={containerRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        cursor: "grab",
+      }}
+    />
+  );
 }
