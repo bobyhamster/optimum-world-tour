@@ -51,9 +51,53 @@ export default function Game({ onExit }) {
   const seconds = String(timeLeft % 60).padStart(2, "0");
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
-  const [gameLocations, setGameLocations] = useState(() =>
-    shuffle(locations).slice(0, 5)
-  );
+ const [gameLocations, setGameLocations] = useState([]);
+const [gameSessionId, setGameSessionId] = useState(null);
+const [gameLoading, setGameLoading] = useState(true);
+const sessionStartedRef = useRef(false);
+useEffect(() => {
+  if (sessionStartedRef.current) return;
+
+  sessionStartedRef.current = true;
+
+  async function startServerGame() {
+    setGameLoading(true);
+
+    const { data, error } = await supabase.rpc("start_game_session");
+
+    if (error) {
+      console.error("Failed to start game session:", error);
+      setGameLoading(false);
+      return;
+    }
+
+    const session = data?.[0];
+
+    if (!session) {
+      console.error("No game session returned");
+      setGameLoading(false);
+      return;
+    }
+
+    const locationIds = session.location_ids;
+
+    const selectedLocations = locationIds
+      .map((id) => locations.find((location) => location.id === id))
+      .filter(Boolean);
+
+    if (selectedLocations.length !== locationIds.length) {
+      console.error("Some server locations were not found locally");
+      setGameLoading(false);
+      return;
+    }
+
+    setGameSessionId(session.session_id);
+    setGameLocations(selectedLocations);
+    setGameLoading(false);
+  }
+
+  startServerGame();
+}, []);
 
   useEffect(() => {
     gameLocations.forEach((location) => {
@@ -81,7 +125,9 @@ export default function Game({ onExit }) {
   const scoreAudioRef = useRef(null);
 
   const currentLocation = gameLocations[round];
-  const factImage = facts[currentLocation.id] || null;
+const factImage = currentLocation
+  ? facts[currentLocation.id] || null
+  : null;
 
   useEffect(() => {
     if (!currentLocation) return;
@@ -95,43 +141,54 @@ export default function Game({ onExit }) {
     }
   }, [currentLocation, factImage]);
 
-  function handleGuess() {
-    if (!selectedPosition) return;
+  async function handleGuess() {
+  if (!selectedPosition || !currentLocation || !gameSessionId) return;
 
-    const distance = getDistance(
-      selectedPosition.lat,
-      selectedPosition.lng,
-      currentLocation.lat,
-      currentLocation.lng
-    );
-    const points = Math.max(
-      0,
-      Math.round(5000 * Math.exp(-distance / 2000))
-    );
+  const { data, error } = await supabase.rpc("submit_guess", {
+    p_session_id: gameSessionId,
+    p_round: round,
+    p_guess_lat: selectedPosition.lat,
+    p_guess_lng: selectedPosition.lng,
+  });
 
-    setResults((prev) => [
-      ...prev,
-      {
-        round: round + 1,
-        score: points,
-        distance,
-        guess: {
-          lat: selectedPosition.lat,
-          lng: selectedPosition.lng,
-        },
-        correct: {
-          lat: currentLocation.lat,
-          lng: currentLocation.lng,
-        },
-        location: currentLocation,
-      },
-    ]);
-    setDistance(distance);
-    setPoints(points);
-    setScore((prev) => prev + points);
-
-    setHasGuessed(true);
+  if (error) {
+    console.error("Failed to submit guess:", error);
+    return;
   }
+
+  const result = data?.[0];
+
+  if (!result) {
+    console.error("No result returned from submit_guess");
+    return;
+  }
+
+  const serverDistance = Number(result.distance);
+  const serverPoints = Number(result.score);
+
+  setResults((prev) => [
+    ...prev,
+    {
+      round: round + 1,
+      score: serverPoints,
+      distance: serverDistance,
+      guess: {
+        lat: selectedPosition.lat,
+        lng: selectedPosition.lng,
+      },
+      correct: {
+        lat: Number(result.correct_lat),
+        lng: Number(result.correct_lng),
+      },
+      location: currentLocation,
+    },
+  ]);
+
+  setDistance(serverDistance);
+  setPoints(serverPoints);
+  setScore((prev) => prev + serverPoints);
+  setHasGuessed(true);
+}
 
   useEffect(() => {
     if (hasGuessed) return;
@@ -197,71 +254,82 @@ export default function Game({ onExit }) {
     setHasGuessed(true);
   }
 
-  async function saveGameResult() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  
 
-    if (!session) return;
+  async function restartGame() {
+  setGameLoading(true);
+  setShowSummary(false);
 
-    const userId = session.user.id;
+  const { data, error } = await supabase.rpc("start_game_session");
 
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("points, games, wins")
-      .eq("id", userId)
-      .single();
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        points: Math.max(profile.points, score),
-        games: profile.games + 1,
-      })
-      .eq("id", userId);
-
-    if (updateError) {
-      console.error(updateError);
-    }
+  if (error) {
+    console.error("Failed to start new game:", error);
+    setGameLoading(false);
+    return;
   }
 
-  function restartGame() {
-    setGameLocations(shuffle(locations).slice(0, 5));
-    setRound(0);
-    setScore(0);
-    setResults([]);
-    setSelectedPosition(null);
-    setHasGuessed(false);
-    setDistance(null);
-    setPoints(null);
-    setAnimatedDistance(0);
-    setAnimatedPoints(0);
-    setTimeLeft(120);
-    setShowSummary(false);
+  const session = data?.[0];
+
+  if (!session) {
+    console.error("No new game session returned");
+    setGameLoading(false);
+    return;
   }
+
+  const locationIds = session.location_ids;
+
+  const selectedLocations = locationIds
+    .map((id) => locations.find((location) => location.id === id))
+    .filter(Boolean);
+
+  if (selectedLocations.length !== locationIds.length) {
+    console.error("Some server locations were not found locally");
+    setGameLoading(false);
+    return;
+  }
+
+  setGameSessionId(session.session_id);
+  setGameLocations(selectedLocations);
+
+  setRound(0);
+  setScore(0);
+  setResults([]);
+  setSelectedPosition(null);
+  setHasGuessed(false);
+  setDistance(null);
+  setPoints(null);
+  setAnimatedDistance(0);
+  setAnimatedPoints(0);
+  setTimeLeft(120);
+
+  setGameLoading(false);
+}
 
   async function handleNextRound() {
-    if (round >= gameLocations.length - 1) {
-      await saveGameResult();
-      setShowSummary(true);
-      return;
-    }
-
-    setRound((prev) => prev + 1);
-    setHasGuessed(false);
-    setSelectedPosition(null);
-    setDistance(null);
-    setPoints(null);
-    setAnimatedDistance(0);
-    setAnimatedPoints(0);
-    setTimeLeft(120);
+  if (round >= gameLocations.length - 1) {
+    setShowSummary(true);
+    return;
   }
 
+  setRound((prev) => prev + 1);
+  setHasGuessed(false);
+  setSelectedPosition(null);
+  setDistance(null);
+  setPoints(null);
+  setAnimatedDistance(0);
+  setAnimatedPoints(0);
+  setTimeLeft(120);
+}
+
+  if (gameLoading || !currentLocation) {
+  return (
+    <main className="min-h-screen bg-[#282C34] flex items-center justify-center text-white">
+      <div className="text-sm tracking-[4px] uppercase text-white/50">
+        Loading game...
+      </div>
+    </main>
+  );
+}
   if (showSummary) {
     return (
       <ReviewResults

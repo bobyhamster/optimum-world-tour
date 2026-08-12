@@ -33,9 +33,8 @@ useEffect(() => {
 
 async function loadLeaderboard() {
   const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("points", { ascending: false });
+  .from("leaderboard")
+  .select("*");
 
   if (error) {
     console.error(error);

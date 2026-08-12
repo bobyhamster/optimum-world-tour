@@ -1,41 +1,106 @@
 import CloseButton from "./CloseButton";
+import tutorialVideo from "../assets/videos/tutorial.mp4";
+
 export default function GuideModal({ onClose, onStart }) {
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-6 backdrop-blur-xl">
+      <div className="relative w-full max-w-[820px] overflow-hidden rounded-[28px] border border-[#3B414B] bg-[#282C34] shadow-[0_30px_100px_rgba(0,0,0,0.65)]">
 
-      <div className="relative w-[760px] rounded-[32px] border border-[#3B414B] bg-[#2C3138] p-8 shadow-[0_30px_100px_rgba(0,0,0,.5)]">
-
-        {/* Close */}
-        <CloseButton onClick={onClose} />
-
-        <h2 className="text-[34px] font-bold text-white">
-          HOW TO PLAY
-        </h2>
-
-        <p className="mt-3 text-[#B0BED1] text-lg">
-          Learn how the Optimum World Tour works before
-          starting your first journey.
-        </p>
-
-        {/* Placeholder */}
-        <div className="mt-8 flex h-[280px] items-center justify-center rounded-[24px] bg-[#1E232B] text-[#708090] text-xl">
-          VIDEO / IMAGE
+        {/* CLOSE BAR */}
+        {/* CLOSE BAR */}
+<div className="relative h-[52px] border-b border-[#3B414B] bg-[#282C34]">
+  <div className="[&>button]:!top-1 [&>button]:!right-3">
+    <CloseButton onClick={onClose} />
+  </div>
+</div>
+        {/* VIDEO */}
+        <div className="px-5 pt-5">
+          <div className="overflow-hidden bg-black">
+            <video
+              src={tutorialVideo}
+              controls
+              playsInline
+              preload="metadata"
+              className="block aspect-video w-full"
+            />
+          </div>
         </div>
 
-        <div className="mt-8 space-y-3 text-[#D3DBE2] text-lg">
-          <p>• Explore the world</p>
-          <p>• Guess the correct country</p>
-          <p>• Earn XP after every round</p>
-          <p>• Climb the leaderboard</p>
-        </div>
+        {/* CONTENT */}
+        <div className="px-7 pb-7 pt-6">
 
-        <button
-  onClick={onStart}
-  className="mt-8 h-[58px] w-full rounded-full bg-white text-[#282C34] text-lg font-semibold hover:bg-[#EEF2F6]"
->
-  START PLAYING
-</button>
+  <div className="space-y-5">
 
+    <div>
+      <div className="text-[15px] font-semibold text-[#FFFBFB]">
+         Press Play
+      </div>
+      <p className="mt-1 text-[14px] leading-5 text-[#9DB0C2]">
+        Jump into Optimum World Tour and start your first round.
+      </p>
+    </div>
+
+    <div>
+      <div className="text-[15px] font-semibold text-[#FFFBFB]">
+         Explore & Guess
+      </div>
+      <p className="mt-1 text-[14px] leading-5 text-[#9DB0C2]">
+        Look around the location, search for clues, and guess the correct country.
+      </p>
+    </div>
+
+    <div>
+      <div className="text-[15px] font-semibold text-[#FFFBFB]">
+         Discover the Team
+      </div>
+      <p className="mt-1 text-[14px] leading-5 text-[#9DB0C2]">
+        After each round, unlock an interesting fact connected to someone from the Optimum ecosystem.
+      </p>
+    </div>
+
+    <div>
+      <div className="text-[15px] font-semibold text-[#FFFBFB]">
+         Earn Points
+      </div>
+      <p className="mt-1 text-[14px] leading-5 text-[#9DB0C2]">
+        The better your guess, the more points you can earn.
+      </p>
+    </div>
+
+    <div>
+      <div className="text-[15px] font-semibold text-[#FFFBFB]">
+         Climb the Leaderboard
+      </div>
+      <p className="mt-1 text-[14px] leading-5 text-[#9DB0C2]">
+        Collect points across the game and compete for a higher spot on the leaderboard.
+      </p>
+    </div>
+
+  </div>
+
+  
+
+  <button
+    onClick={onStart}
+    className="
+      mt-6
+      h-[58px]
+      w-full
+      rounded-full
+      bg-[#FFFBFB]
+      text-[16px]
+      font-semibold
+      tracking-wide
+      text-[#282C34]
+      transition
+      hover:bg-[#D3DBE2]
+      active:scale-[0.99]
+    "
+  >
+    START PLAYING
+  </button>
+
+</div>
       </div>
     </div>
   );
