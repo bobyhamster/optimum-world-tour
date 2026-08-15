@@ -4,9 +4,20 @@ import { supabase } from "../lib/supabase";
 import CloseButton from "./CloseButton";
 
 export default function LeaderboardModal({ onClose }) {
-    const [players, setPlayers] = useState([]);
-const [loading, setLoading] = useState(true);
-const [me, setMe] = useState(null);
+  function formatGameTime(seconds) {
+    if (seconds === null || seconds === undefined) {
+      return "--:--";
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [me, setMe] = useState(null);
   
 useEffect(() => {
   loadLeaderboard();
@@ -34,7 +45,8 @@ useEffect(() => {
 async function loadLeaderboard() {
   const { data, error } = await supabase
   .from("leaderboard")
-  .select("*");
+  .select("*")
+  .order("points", { ascending: false });
 
   if (error) {
     console.error(error);
@@ -127,13 +139,25 @@ setLoading(false);
 
               {/* Права колонка XP з безпечним внутрішнім відступом */}
               <div className="text-right shrink-0">
-                <span className="text-[#FFFBFB] font-semibold" style={{ fontSize: "16px" }}>
-                  {player.points.toLocaleString()}
-                </span>
-                <span className="text-[#9DB0C2] font-normal" style={{ fontSize: "13px", marginLeft: "6px" }}>
-                  Points
-                </span>
-              </div>
+  <div>
+    <span className="text-[#FFFBFB] font-semibold" style={{ fontSize: "16px" }}>
+      {player.points.toLocaleString()}
+    </span>
+    <span
+      className="text-[#9DB0C2] font-normal"
+      style={{ fontSize: "13px", marginLeft: "6px" }}
+    >
+      Points
+    </span>
+  </div>
+
+  <div
+    className="text-[#9DB0C2] font-normal"
+    style={{ fontSize: "12px", marginTop: "3px" }}
+  >
+    {formatGameTime(player.game_time)}
+  </div>
+</div>
             </div>
           ))}
         </div>
@@ -166,13 +190,25 @@ setLoading(false);
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[#51B1FE] font-bold" style={{ fontSize: "20px" }}>
-                {me?.points?.toLocaleString()}
-              </span>
-              <span className="text-[#9DB0C2] font-normal" style={{ fontSize: "13px", marginLeft: "6px" }}>
-                Points
-              </span>
-            </div>
+  <div>
+    <span className="text-[#51B1FE] font-bold" style={{ fontSize: "20px" }}>
+      {me?.points?.toLocaleString()}
+    </span>
+    <span
+      className="text-[#9DB0C2] font-normal"
+      style={{ fontSize: "13px", marginLeft: "6px" }}
+    >
+      Points
+    </span>
+  </div>
+
+  <div
+    className="text-[#9DB0C2] font-normal"
+    style={{ fontSize: "12px", marginTop: "3px" }}
+  >
+    {formatGameTime(me?.game_time)}
+  </div>
+</div>
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import PanoramaViewer from "../components/PanoramaViewer";
 import MapPanel from "../components/MapPanel";
 import ResultPanel from "../components/ResultPanel";
 import ReviewResults from "../components/ReviewResults";
-import facts from "../data/facts";
+
 import FinalRoundPanel from "../components/FinalRoundPanel";
 import LeaderboardModal from "../components/LeaderboardModal";
 import Compass from "../components/Compass";
@@ -51,69 +51,66 @@ export default function Game({ onExit }) {
   const seconds = String(timeLeft % 60).padStart(2, "0");
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
- const [gameLocations, setGameLocations] = useState([]);
-const [gameSessionId, setGameSessionId] = useState(null);
-const [gameLoading, setGameLoading] = useState(true);
-const sessionStartedRef = useRef(false);
-useEffect(() => {
-  if (sessionStartedRef.current) return;
-
-  sessionStartedRef.current = true;
-
-  async function startServerGame() {
-    setGameLoading(true);
-
-    const { data, error } = await supabase.rpc("start_game_session");
-
-    if (error) {
-      console.error("Failed to start game session:", error);
-      setGameLoading(false);
-      return;
-    }
-
-    const session = data?.[0];
-
-    if (!session) {
-      console.error("No game session returned");
-      setGameLoading(false);
-      return;
-    }
-
-    const locationIds = session.location_ids;
-
-    const selectedLocations = locationIds
-      .map((id) => locations.find((location) => location.id === id))
-      .filter(Boolean);
-
-    if (selectedLocations.length !== locationIds.length) {
-      console.error("Some server locations were not found locally");
-      setGameLoading(false);
-      return;
-    }
-
-    setGameSessionId(session.session_id);
-    setGameLocations(selectedLocations);
-    setGameLoading(false);
-  }
-
-  startServerGame();
-}, []);
+  const [gameLocations, setGameLocations] = useState([]);
+  const [gameSessionId, setGameSessionId] = useState(null);
+  const [gameLoading, setGameLoading] = useState(true);
+  const sessionStartedRef = useRef(false);
 
   useEffect(() => {
-    gameLocations.forEach((location) => {
-      if (location?.image) {
-        const img = new Image();
-        img.src = location.image;
+    if (sessionStartedRef.current) return;
+
+    sessionStartedRef.current = true;
+
+    async function startServerGame() {
+      setGameLoading(true);
+
+      const { data, error } = await supabase.rpc("start_game_session");
+
+      if (error) {
+        console.error("Failed to start game session:", error);
+        setGameLoading(false);
+        return;
       }
 
-      const factImage = facts[location.id];
+      const session = data?.[0];
 
-      if (factImage) {
-        const fact = new Image();
-        fact.src = factImage;
+      if (!session) {
+        console.error("No game session returned");
+        setGameLoading(false);
+        return;
       }
-    });
-  }, [gameLocations]);
+
+      const locationIds = session.location_ids;
+
+      const selectedLocations = locationIds
+        .map((id) => locations.find((location) => location.id === id))
+        .filter(Boolean);
+
+      if (selectedLocations.length !== locationIds.length) {
+        console.error("Some server locations were not found locally");
+        setGameLoading(false);
+        return;
+      }
+
+      setGameSessionId(session.session_id);
+setGameLocations(selectedLocations);
+
+const { error: roundError } = await supabase.rpc("start_game_round", {
+  p_session_id: session.session_id,
+  p_round: 0,
+});
+
+if (roundError) {
+  console.error("Failed to start round:", roundError);
+  setGameLoading(false);
+  return;
+}
+
+setGameLoading(false);  
+    }
+
+    startServerGame();
+  }, []);
 
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [hasGuessed, setHasGuessed] = useState(false);
@@ -125,9 +122,8 @@ useEffect(() => {
   const scoreAudioRef = useRef(null);
 
   const currentLocation = gameLocations[round];
-const factImage = currentLocation
-  ? facts[currentLocation.id] || null
-  : null;
+  const [factImage, setFactImage] = useState(null);
+  const [prefetchedFactImage, setPrefetchedFactImage] = useState(null);
 
   useEffect(() => {
     if (!currentLocation) return;
@@ -135,60 +131,136 @@ const factImage = currentLocation
     const img = new Image();
     img.src = currentLocation.image;
 
-    if (factImage) {
-      const fact = new Image();
-      fact.src = factImage;
+    setPrefetchedFactImage(null);
+
+    let cancelled = false;
+
+    async function prefetchFact() {
+      const factId = Number(currentLocation.id);
+
+      if (!Number.isInteger(factId)) {
+        console.error("Invalid fact id:", currentLocation.id);
+        return;
+      }
+
+      const { data, error } =
+        await supabase.functions.invoke("get-fact-image", {
+          body: {
+            fact_id: factId,
+          },
+        });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Failed to prefetch fact image:", error);
+        return;
+      }
+
+      if (!data?.image_url) {
+        console.error("No image URL returned for fact:", factId);
+        return;
+      }
+
+      const factImg = new Image();
+
+      factImg.onload = () => {
+        if (!cancelled) {
+          setPrefetchedFactImage(data.image_url);
+          console.log("FACT IMAGE PREFETCHED:", factId);
+        }
+      };
+
+      factImg.onerror = () => {
+        console.error("Failed to preload fact image:", factId);
+      };
+
+      factImg.src = data.image_url;
     }
-  }, [currentLocation, factImage]);
+
+    prefetchFact();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentLocation]);
 
   async function handleGuess() {
-  if (!selectedPosition || !currentLocation || !gameSessionId) return;
+    if (!selectedPosition || !currentLocation || !gameSessionId) return;
 
-  const { data, error } = await supabase.rpc("submit_guess", {
-    p_session_id: gameSessionId,
-    p_round: round,
-    p_guess_lat: selectedPosition.lat,
-    p_guess_lng: selectedPosition.lng,
-  });
+    console.time("GUESS TOTAL");
 
-  if (error) {
-    console.error("Failed to submit guess:", error);
-    return;
-  }
+    const { data, error } = await supabase.rpc("submit_guess", {
+      p_session_id: gameSessionId,
+      p_round: round,
+      p_guess_lat: selectedPosition.lat,
+      p_guess_lng: selectedPosition.lng,
+    });
 
-  const result = data?.[0];
+    if (error) {
+      console.error("Failed to submit guess:", error);
+      return;
+    }
+    console.timeLog("GUESS TOTAL", "submit_guess finished");
 
-  if (!result) {
-    console.error("No result returned from submit_guess");
-    return;
-  }
+    const result = data?.[0];
 
-  const serverDistance = Number(result.distance);
-  const serverPoints = Number(result.score);
+    if (!result) {
+      console.error("No result returned from submit_guess");
+      return;
+    }
 
-  setResults((prev) => [
-    ...prev,
-    {
-      round: round + 1,
-      score: serverPoints,
-      distance: serverDistance,
-      guess: {
-        lat: selectedPosition.lat,
-        lng: selectedPosition.lng,
+    const serverDistance = Number(result.distance);
+    const serverPoints = Number(result.score);
+    const serverFactId = Number(result.fact_id);
+    console.log("FACT ID FROM SERVER:", serverFactId);
+
+    if (prefetchedFactImage) {
+      setFactImage(prefetchedFactImage);
+      console.log("USING PREFETCHED FACT IMAGE");
+    } else {
+      console.log("PREFETCH NOT READY, LOADING FACT IMAGE");
+
+      const { data: factData, error: factError } =
+        await supabase.functions.invoke("get-fact-image", {
+          body: {
+            fact_id: serverFactId,
+          },
+        });
+
+      if (factError) {
+        console.error("Failed to load fact image:", factError);
+      } else if (factData?.image_url) {
+        setFactImage(factData.image_url);
+      }
+    }
+
+    console.timeEnd("GUESS TOTAL");
+
+    setResults((prev) => [
+      ...prev,
+      {
+        round: round + 1,
+        score: serverPoints,
+        distance: serverDistance,
+        guess: {
+          lat: selectedPosition.lat,
+          lng: selectedPosition.lng,
+        },
+        correct: {
+          lat: Number(result.correct_lat),
+          lng: Number(result.correct_lng),
+        },
+        location: currentLocation,
+        time: 120 - timeLeft, // Записуємо витрачений час у секундах
       },
-      correct: {
-        lat: Number(result.correct_lat),
-        lng: Number(result.correct_lng),
-      },
-      location: currentLocation,
-    },
-  ]);
+    ]);
 
-  setDistance(serverDistance);
-  setPoints(serverPoints);
-  setScore((prev) => prev + serverPoints);
-  setHasGuessed(true);
-}
+    setDistance(serverDistance);
+    setPoints(serverPoints);
+    setScore((prev) => prev + serverPoints);
+    setHasGuessed(true);
+  }
 
   useEffect(() => {
     if (hasGuessed) return;
@@ -249,61 +321,91 @@ const factImage = currentLocation
       return;
     }
 
+    // Записуємо раунд, якщо час вийшов без кліку
+    setResults((prev) => [
+      ...prev,
+      {
+        round: round + 1,
+        score: 0,
+        distance: null,
+        guess: null,
+        correct: {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+        },
+        location: currentLocation,
+        time: 120, // Витрачено всі 120 секунд
+      },
+    ]);
+
     setDistance(null);
     setPoints(0);
     setHasGuessed(true);
   }
 
-  
-
   async function restartGame() {
-  setGameLoading(true);
-  setShowSummary(false);
+    setGameLoading(true);
+    setShowSummary(false);
 
-  const { data, error } = await supabase.rpc("start_game_session");
+    const { data, error } = await supabase.rpc("start_game_session");
 
-  if (error) {
-    console.error("Failed to start new game:", error);
-    setGameLoading(false);
-    return;
+    if (error) {
+      console.error("Failed to start new game:", error);
+      setGameLoading(false);
+      return;
+    }
+
+    const session = data?.[0];
+
+    if (!session) {
+      console.error("No new game session returned");
+      setGameLoading(false);
+      return;
+    }
+
+    const locationIds = session.location_ids;
+
+    const selectedLocations = locationIds
+      .map((id) => locations.find((location) => location.id === id))
+      .filter(Boolean);
+
+    if (selectedLocations.length !== locationIds.length) {
+      console.error("Some server locations were not found locally");
+      setGameLoading(false);
+      return;
+    }
+
+    setGameSessionId(session.session_id);
+    setGameLocations(selectedLocations);
+const { error: roundError } = await supabase.rpc(
+  "start_game_round",
+  {
+    p_session_id: session.session_id,
+    p_round: 0,
   }
+);
 
-  const session = data?.[0];
-
-  if (!session) {
-    console.error("No new game session returned");
-    setGameLoading(false);
-    return;
-  }
-
-  const locationIds = session.location_ids;
-
-  const selectedLocations = locationIds
-    .map((id) => locations.find((location) => location.id === id))
-    .filter(Boolean);
-
-  if (selectedLocations.length !== locationIds.length) {
-    console.error("Some server locations were not found locally");
-    setGameLoading(false);
-    return;
-  }
-
-  setGameSessionId(session.session_id);
-  setGameLocations(selectedLocations);
-
-  setRound(0);
-  setScore(0);
-  setResults([]);
-  setSelectedPosition(null);
-  setHasGuessed(false);
-  setDistance(null);
-  setPoints(null);
-  setAnimatedDistance(0);
-  setAnimatedPoints(0);
-  setTimeLeft(120);
-
+if (roundError) {
+  console.error("Failed to start first round:", roundError);
   setGameLoading(false);
+  return;
 }
+
+    setRound(0);
+    setScore(0);
+    setResults([]);
+    setSelectedPosition(null);
+    setHasGuessed(false);
+    setDistance(null);
+    setPoints(null);
+    setAnimatedDistance(0);
+    setAnimatedPoints(0);
+    setTimeLeft(120);
+    setFactImage(null);
+    setPrefetchedFactImage(null);
+
+    setGameLoading(false);
+  }
 
   async function handleNextRound() {
   if (round >= gameLocations.length - 1) {
@@ -311,7 +413,19 @@ const factImage = currentLocation
     return;
   }
 
-  setRound((prev) => prev + 1);
+  const nextRound = round + 1;
+
+  const { error: roundError } = await supabase.rpc("start_game_round", {
+    p_session_id: gameSessionId,
+    p_round: nextRound,
+  });
+
+  if (roundError) {
+    console.error("Failed to start next round:", roundError);
+    return;
+  }
+
+  setRound(nextRound);
   setHasGuessed(false);
   setSelectedPosition(null);
   setDistance(null);
@@ -319,22 +433,32 @@ const factImage = currentLocation
   setAnimatedDistance(0);
   setAnimatedPoints(0);
   setTimeLeft(120);
+  setFactImage(null);
+  setPrefetchedFactImage(null);
 }
 
   if (gameLoading || !currentLocation) {
-  return (
-    <main className="min-h-screen bg-[#282C34] flex items-center justify-center text-white">
-      <div className="text-sm tracking-[4px] uppercase text-white/50">
-        Loading game...
-      </div>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen bg-[#282C34] flex items-center justify-center text-white">
+        <div className="text-sm tracking-[4px] uppercase text-white/50">
+          Loading game...
+        </div>
+      </main>
+    );
+  }
+
   if (showSummary) {
+    // Підраховуємо сумарний час усіх раундів
+    const totalTimeInSeconds = results.reduce(
+      (acc, curr) => acc + (curr.time || 0),
+      0
+    );
+
     return (
       <ReviewResults
         score={score}
         results={results}
+        timeInSeconds={totalTimeInSeconds}
         onPlayAgain={restartGame}
         onLeaderboard={() => setShowLeaderboard(true)}
         onExit={onExit}
